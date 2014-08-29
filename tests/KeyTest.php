@@ -13,7 +13,7 @@ class KeyTest extends BaseObject
         $value = $k->get();
         $this->assertTrue($this->predis->exists('cb:test'));
         $this->assertEquals(1, $value);
-        $this->assertEquals(1, $this->predis->get('cb:test'));
+        $this->assertEquals(serialize(1), $this->predis->get('cb:test'));
     }
 
 

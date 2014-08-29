@@ -37,9 +37,11 @@ class Key
         if ($data === null) {
             $boundCallback = $this->closure->bindTo($this);
             $data = $boundCallback();
-            $this->predis->setex($this->getKeyName($this->key), $this->ttl, $data);
+            $this->predis->setex($this->getKeyName($this->key), $this->ttl, serialize($data));
+            return $data;
+        } else {
+            return unserialize($data);
         }
-        return $data;
     }
 
     public function flush()
