@@ -3,7 +3,11 @@
     <php>
         <ini name="error_reporting" value="E_ALL &amp; ~(E_STRICT | E_NOTICE | E_DEPRACATED)"/>
     </php>
-    <testsuite>
-        <directory suffix="Test.php">.</directory>
-    </testsuite>
+    <testsuites>
+        <testsuite>
+            <file>KeyTest.php</file>
+            <file>CacheTest.php</file>
+            <file>TagTest.php</file>
+        </testsuite>
+    </testsuites>
 </phpunit>

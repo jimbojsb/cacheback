@@ -1,100 +1,49 @@
 <?php
+require_once 'BaseObject.php';
+
 use CacheBack\Cache;
 
-class CacheBackTest extends PHPUnit_Framework_TestCase
+class CacheBackTest extends BaseObject
 {
-    /**
-     * @var \CacheBack\Cache
-     */
-    private $cache;
-
-    /**
-     * @var \Predis\Client
-     */
-    private $predis;
-
-    public function setUp()
+    public function testInvoke()
     {
-        $p = new Predis\Client;
-        $this->predis = $p;
+        $c = new Cache($this->predis);
+        $key = $c('test', $this->closure);
 
-        $c = new Cache($p);
-        $this->cache = $c;
-    }
+        $this->assertInstanceOf('\CacheBack\Key', $key);
 
-    public function tearDown()
-    {
-        $keys = $this->predis->keys("cb:*");
-        foreach ($keys as $key) {
-            $this->predis->del($key);
-        }
-        unset($this->cache);
-        unset($this->predis);
-    }
+        $ttlProp = new ReflectionProperty('\CacheBack\Key', 'ttl');
+        $ttlProp->setAccessible(true);
+        $this->assertEquals(86400, $ttlProp->getValue($key));
 
-    public function testPlainCache()
-    {
-        $c = $this->cache;
+        $keyProp = new ReflectionProperty('\CacheBack\Key', 'key');
+        $keyProp->setAccessible(true);
+        $this->assertEquals('test', $keyProp->getValue($key));
 
-        $this->assertFalse($this->predis->exists('cb:test'));
+        $closureProp = new ReflectionProperty('\CacheBack\Key', 'closure');
+        $closureProp->setAccessible(true);
+        $this->assertInstanceOf('\Closure', $closureProp->getValue($key));
+        $this->assertEquals(spl_object_hash($this->closure), spl_object_hash($closureProp->getValue($key)));
 
-        $data = $c->get('test', function() {
-            return 'bar';
-        });
 
-        $this->assertTrue($this->predis->exists('cb:test'));
+        $predisProp = new ReflectionProperty('\CacheBack\Key', 'predis');
+        $predisProp->setAccessible(true);
+        $this->assertInstanceOf('\Predis\Client', $predisProp->getValue($key));
+        $this->assertEquals(spl_object_hash($this->predis), spl_object_hash($predisProp->getValue($key)));
 
-        $this->assertEquals('bar', $data);
-        $this->assertEquals('bar', $c->get('test'));
-    }
-
-    public function testTtl()
-    {
-        $c = $this->cache;
-        $c->get('test', function() {
-            return 'bar';
-        }, 2);
-        $this->assertTrue($this->predis->exists('cb:test'));
-        sleep(3);
-        $this->assertFalse($this->predis->exists('cb:test'));
-    }
-
-    public function testGetKeysForTag()
-    {
-        $c = $this->cache;
-        $c->get('test', function() {
-            $this->tag('foo');
-            return 'bar';
-        });
-        $this->assertEquals(['cb:test'], $this->predis->smembers('cb:tag:foo'));
-        $this->assertEquals(['cb:test'], $c->getKeysForTag('foo'));
-    }
-
-    public function testTag()
-    {
-        $c = $this->cache;
-        $c->get('test', function() {
-            $this->tag('foo');
-            return 'bar';
-        });
-        $this->assertTrue($this->predis->exists('cb:tag:foo'));
-        $this->assertEquals(['cb:test'], $this->predis->smembers('cb:tag:foo'));
-        $c->flushTag('foo');
-        $this->assertFalse($this->predis->exists('cb:tag:foo'));
+        $keyPrefixProp = new ReflectionProperty('\CacheBack\Key', 'keyPrefix');
+        $keyPrefixProp->setAccessible(true);
+        $this->assertEquals('cb', $keyPrefixProp->getValue($key));
     }
 
     public function testFlush()
     {
-        $c = $this->cache;
-        $c->get('test', function() {
-            $this->tag('foo');
-            return 'bar';
-        });
-        $c->get('test1', function() {
-            return 'baz';
-        });
+        $c = new Cache($this->predis);
+        $k = $c('test', $this->closure);
+        $k->tag('foo');
+        $k->get();
 
-        $this->assertCount(3, $this->predis->keys('cb:*'));
+        $this->assertCount(2, $this->predis->keys('cb:*'));
         $c->flush();
         $this->assertCount(0, $this->predis->keys('cb:*'));
     }
