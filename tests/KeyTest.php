@@ -19,12 +19,11 @@ class KeyTest extends BaseObject
 
     public function testTtl()
     {
-        $k = new Key($this->predis, 'test', $this->closure, 2);
+        $k = new Key($this->predis, 'test', $this->closure, 300);
         $k->setKeyPrefix('cb');
         $k->get();
         $this->assertTrue($this->predis->exists('cb:test'));
-        sleep(2);
-        $this->assertFalse($this->predis->exists('cb:test'));
+        $this->assertEquals(300, $this->predis->ttl('cb:test'));
     }
 
     public function testTag()
