@@ -3,7 +3,7 @@ namespace CacheBack;
 
 trait CacheKeyTrait
 {
-    private $keyPrefix;
+    protected $keyPrefix;
 
     public function setKeyPrefix($keyPrefix)
     {

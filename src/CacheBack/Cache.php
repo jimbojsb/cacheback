@@ -3,13 +3,24 @@ namespace CacheBack;
 
 class Cache
 {
-    private $predis;
-    private $keyPrefix;
+    protected $predis;
+    protected $keyPrefix;
+    protected $enabled = true;
 
     public function __construct(\Predis\Client $predis, $keyPrefix = 'cb')
     {
         $this->predis = $predis;
         $this->keyPrefix = $keyPrefix;
+    }
+
+    public function disable()
+    {
+        $this->enabled = false;
+    }
+
+    public function enable()
+    {
+        $this->enabled = true;
     }
 
     /**
@@ -20,7 +31,7 @@ class Cache
      */
     public function __invoke($key, \Closure $closure, $ttl = 86400)
     {
-        $keyObj = new Key($this->predis, $key, $closure, $ttl);
+        $keyObj = new Key($this->predis, $key, $closure, $ttl, $this->enabled);
         $keyObj->setKeyPrefix($this->keyPrefix);
         return $keyObj;
     }

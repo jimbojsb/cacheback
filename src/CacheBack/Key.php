@@ -4,24 +4,27 @@ namespace CacheBack;
 class Key
 {
     /** @var int */
-    private $ttl;
+    protected $ttl;
 
     /** @var \Closure  */
-    private $closure;
+    protected $closure;
 
     /** @var \Predis\Client  */
-    private $predis;
+    protected $predis;
 
-    private $key;
+    protected $key;
+
+    protected $enabled;
 
     use CacheKeyTrait;
 
-    public function __construct(\Predis\Client $predis, $key, \Closure $closure, $ttl = 86400)
+    public function __construct(\Predis\Client $predis, $key, \Closure $closure, $ttl = 86400, $enabled = true)
     {
         $this->ttl = $ttl;
         $this->closure = $closure;
         $this->predis = $predis;
         $this->key = $key;
+        $this->enabled = $enabled;
     }
 
     public function tag($tag)
@@ -33,7 +36,9 @@ class Key
 
     public function get()
     {
-        $data = $this->predis->get($this->getKeyName($this->key));
+        if ($this->enabled) {
+            $data = $this->predis->get($this->getKeyName($this->key));
+        }
         if ($data === null) {
             $boundCallback = $this->closure->bindTo($this);
             $data = $boundCallback();

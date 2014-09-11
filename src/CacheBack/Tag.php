@@ -3,14 +3,14 @@ namespace CacheBack;
 
 class Tag
 {
-    private $tag;
+    protected $tag;
 
     /** @var \Predis\Client */
-    private $predis;
+    protected $predis;
 
     use CacheKeyTrait;
 
-    public function __construct(\Predis\Client $predis, $tag)
+    public function __construct(\Predis\Client $predis, $tag, $enabled = true)
     {
         $this->tag = $tag;
         $this->predis = $predis;
