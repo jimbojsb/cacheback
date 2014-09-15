@@ -48,4 +48,14 @@ class CacheBackTest extends BaseObject
         $this->assertCount(0, $this->predis->keys('cb:*'));
     }
 
+    public function testFlushKey()
+    {
+        $c = new Cache($this->predis);
+        $k = $c('test', $this->closure);
+        $k->get();
+        $this->assertCount(1, $this->predis->keys('cb:*'));
+        $c->flushKey('test');
+        $this->assertCount(0, $this->predis->keys('cb:*'));
+    }
+
 }

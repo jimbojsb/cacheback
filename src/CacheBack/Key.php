@@ -18,7 +18,7 @@ class Key
 
     use CacheKeyTrait;
 
-    public function __construct(\Predis\Client $predis, $key, \Closure $closure, $ttl = 86400, $enabled = true)
+    public function __construct(\Predis\Client $predis, $key, \Closure $closure = null, $ttl = 86400, $enabled = true)
     {
         $this->ttl = $ttl;
         $this->closure = $closure;
@@ -36,6 +36,10 @@ class Key
 
     public function get()
     {
+        if (!($this->closure instanceof \Closure)) {
+            throw new \RuntimeException("Cannot get a key with an undefined closure");
+        }
+
         if ($this->enabled) {
             $data = $this->predis->get($this->getKeyName($this->key));
         }

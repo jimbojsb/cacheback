@@ -36,6 +36,14 @@ class Cache
         return $keyObj;
     }
 
+
+    public function flushKey($key)
+    {
+        $key = new Key($this->predis, $key);
+        $key->setKeyPrefix($this->keyPrefix);
+        $key->flush();
+    }
+
     public function flush()
     {
         $keysToDelete = $this->predis->keys("$this->keyPrefix:*");

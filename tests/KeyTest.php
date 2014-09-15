@@ -51,4 +51,14 @@ class KeyTest extends BaseObject
         $this->assertFalse($this->predis->exists('cb:test'));
     }
 
+    public function testGetWithUndefinedClosure()
+    {
+        $k = new Key($this->predis, 'test');
+        try {
+            $k->get();
+            $this->fail("Should have thrown a runtime exception on undefined key closure");
+        } catch (Exception $e) {
+        }
+    }
+
 }
