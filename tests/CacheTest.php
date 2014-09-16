@@ -43,7 +43,7 @@ class CacheBackTest extends BaseObject
         $k->tag('foo');
         $k->get();
 
-        $this->assertCount(2, $this->predis->keys('cb:*'));
+        $this->assertCount(3, $this->predis->keys('cb:*'));
         $c->flush();
         $this->assertCount(0, $this->predis->keys('cb:*'));
     }

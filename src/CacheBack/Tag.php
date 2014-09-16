@@ -3,48 +3,55 @@ namespace CacheBack;
 
 class Tag
 {
-    protected $tag;
-
-    /** @var \Predis\Client */
-    protected $predis;
-
     use CacheKeyTrait;
-
-    public function __construct(\Predis\Client $predis, $tag, $enabled = true)
-    {
-        $this->tag = $tag;
-        $this->predis = $predis;
-    }
 
     public function addKey($key)
     {
-        $tagKey = $this->getKeyName("tag:$this->tag");
-        $this->predis->sadd($tagKey, $this->getKeyName($key));
+        if (is_string($key)) {
+            $key = new Key($this->predis, $key);
+            $key->setKeyPrefix($this->keyPrefix);
+        }
+
+        $tagKey = $this->getKeyName("tag:$this->key");
+        $keyTagIndexKey = $this->getKeyName("tags:" . $key->getRawKeyName());
+        $this->predis->sadd($tagKey, $key->getRawKeyName());
+        $this->predis->sadd($keyTagIndexKey, $this->key);
     }
 
     public function removeKey($key)
     {
-        $tagKey = $this->getKeyName("tag:$this->tag");
-        $this->predis->srem($tagKey, $this->getKeyName($key));
+        if (is_string($key)) {
+            $key = new Key($this->predis, $key);
+            $key->setKeyPrefix($this->keyPrefix);
+        }
+
+        $tagKey = $this->getKeyName("tag:$this->key");
+        $keyTagIndexKey = $this->getKeyName("tags:" . $key->getRawKeyName());
+        $this->predis->srem($tagKey, $key->getRawKeyName());
+        $this->predis->srem($keyTagIndexKey, $this->key);
     }
 
+    /** @return Key[] */
     public function getKeys()
     {
-        $keys = $this->predis->smembers($this->getKeyName("tag:$this->tag"));
-        array_walk($keys, function (&$el) {
-            $el = str_replace("$this->keyPrefix:", '', $el);
-        });
+        $keys = [];
+        $keysNames = $this->predis->smembers($this->getKeyName("tag:$this->key"));
+        foreach ($keysNames as $key) {
+            $k = new Key($this->predis, $key);
+            $k->setKeyPrefix($this->keyPrefix);
+            $keys[] = $k;
+        }
         return $keys;
     }
 
     public function flush()
     {
         $keysToDelete = $this->getKeys();
-        $this->predis->pipeline(function($r) use ($keysToDelete) {
-            foreach ($keysToDelete as $key) {
-                $r->del($this->getKeyName($key));
-                $this->predis->srem($this->getKeyName("tag:$this->tag"), $this->getKeyName($key));
-            }
-        });
+        foreach ($keysToDelete as $key) {
+            $key->flush();
+            $this->predis->del($this->getKeyName("tags:" . $key->getRawKeyName()));
+        }
+        $this->predis->del($this->getKeyName("tag:$this->key"));
+
     }
 }

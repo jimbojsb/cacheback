@@ -31,8 +31,10 @@ class Cache
      */
     public function __invoke($key, \Closure $closure, $ttl = 86400)
     {
-        $keyObj = new Key($this->predis, $key, $closure, $ttl, $this->enabled);
+        $keyObj = new Key($this->predis, $key);
         $keyObj->setKeyPrefix($this->keyPrefix);
+        $keyObj->setTtl($ttl);
+        $keyObj->setClosure($closure);
         return $keyObj;
     }
 

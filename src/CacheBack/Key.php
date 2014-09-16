@@ -4,34 +4,44 @@ namespace CacheBack;
 class Key
 {
     /** @var int */
-    protected $ttl;
+    protected $ttl = 86400;
 
     /** @var \Closure  */
     protected $closure;
 
-    /** @var \Predis\Client  */
-    protected $predis;
-
-    protected $key;
-
-    protected $enabled;
+    /** @var boolean */
+    protected $enabled = true;
 
     use CacheKeyTrait;
 
-    public function __construct(\Predis\Client $predis, $key, \Closure $closure = null, $ttl = 86400, $enabled = true)
+    public function setEnabled($enabled)
     {
-        $this->ttl = $ttl;
+        if (is_bool($enabled)) {
+            $this->enabled = $enabled;
+        } else {
+            throw new \InvalidArgumentException("\$enabled must be boolean");
+        }
+    }
+
+    public function setClosure(\Closure $closure)
+    {
         $this->closure = $closure;
-        $this->predis = $predis;
-        $this->key = $key;
-        $this->enabled = $enabled;
+    }
+
+    public function setTtl($ttl)
+    {
+        if (is_int($ttl)) {
+            $this->ttl = $ttl;
+        } else {
+            throw new \InvalidArgumentException("TTL must be an integer");
+        }
     }
 
     public function tag($tag)
     {
         $tag = new Tag($this->predis, $tag);
         $tag->setKeyPrefix($this->keyPrefix);
-        $tag->addKey($this->key);
+        $tag->addKey($this);
     }
 
     public function get()
@@ -51,6 +61,21 @@ class Key
         } else {
             return unserialize($data);
         }
+    }
+
+    /**
+     * @return Tag[]
+     */
+    public function getTags()
+    {
+        $tags = [];
+        $tagsKeys = $this->predis->smembers($this->getKeyName("tags:$this->key"));
+        foreach ($tagsKeys as $tagKey) {
+            $tag = new Tag($this->predis, $tagKey);
+            $tag->setKeyPrefix($this->keyPrefix);
+            $tags[] = $tag;
+        }
+        return $tags;
     }
 
     public function flush()
