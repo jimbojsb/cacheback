@@ -58,4 +58,23 @@ class CacheBackTest extends BaseObject
         $this->assertCount(0, $this->predis->keys('cb:*'));
     }
 
+    public function testHitMissClosures()
+    {
+        $c = new Cache($this->predis);
+        $c->setOnMiss(function() {});
+        $c->setOnHit(function() {});
+        $k = $c('test', $this->closure);
+
+        $rp = new ReflectionProperty('\CacheBack\Key', 'onMiss');
+        $rp->setAccessible(true);
+        $value = $rp->getValue($k);
+        $this->assertInstanceOf('\Closure', $value);
+
+        $rp = new ReflectionProperty('\CacheBack\Key', 'onHit');
+        $rp->setAccessible(true);
+        $value = $rp->getValue($k);
+        $this->assertInstanceOf('\Closure', $value);
+
+    }
+
 }

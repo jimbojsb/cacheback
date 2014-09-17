@@ -12,6 +12,10 @@ class Key
     /** @var boolean */
     protected $enabled = true;
 
+    protected $onHit;
+
+    protected $onMiss;
+
     use CacheKeyTrait;
 
     public function setEnabled($enabled)
@@ -57,9 +61,16 @@ class Key
             $boundCallback = $this->closure->bindTo($this);
             $data = $boundCallback();
             $this->predis->setex($this->getKeyName($this->key), $this->ttl, serialize($data));
+            if ($this->onMiss instanceof \Closure) {
+                call_user_func_array($this->onMiss, [$this, $data]);
+            }
             return $data;
         } else {
-            return unserialize($data);
+            $value = unserialize($data);
+            if ($this->onHit instanceof \Closure) {
+                call_user_func_array($this->onHit, [$this, $value]);
+            }
+            return $value;
         }
     }
 
@@ -82,4 +93,16 @@ class Key
     {
         $this->predis->del($this->getKeyName($this->key));
     }
+
+    public function setOnHit($onHit)
+    {
+        $this->onHit = $onHit;
+    }
+
+    public function setOnMiss($onMiss)
+    {
+        $this->onMiss = $onMiss;
+    }
+
+
 }

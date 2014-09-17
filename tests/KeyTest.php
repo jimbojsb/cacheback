@@ -106,4 +106,28 @@ class KeyTest extends BaseObject
         $this->assertInstanceOf("\CacheBack\Tag", $tag);
         $this->assertEquals('testTag', $tag->getRawKeyName());
     }
+
+    public function testHitMissClosure()
+    {
+        $k = new Key($this->predis, 'hit');
+        $k->setClosure($this->closure);
+
+        $shouldFail = true;
+        $k->setOnHit(function() use(&$shouldFail) {
+            $shouldFail = false;
+        });
+        $k->get(); //miss
+        $k->get(); //hit
+        $this->assertFalse($shouldFail);
+
+        $k = new Key($this->predis, 'miss');
+        $k->setClosure($this->closure);
+
+        $shouldFail = true;
+        $k->setOnMiss(function() use(&$shouldFail) {
+            $shouldFail = false;
+        });
+        $k->get(); //miss
+        $this->assertFalse($shouldFail);
+    }
 }
