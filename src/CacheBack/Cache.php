@@ -50,6 +50,7 @@ class Cache
         $keyObj->setClosure($closure);
         $keyObj->setOnHit($this->onHit);
         $keyObj->setOnMiss($this->onMiss);
+        $keyObj->setEnabled($this->enabled);
         return $keyObj;
     }
 

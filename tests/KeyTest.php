@@ -96,6 +96,19 @@ class KeyTest extends BaseObject
         $this->AssertEquals(false, $rp->getValue($k));
     }
 
+    public function testEnabled()
+    {
+        $k = new Key($this->predis, 'test');
+        $k->setClosure($this->closure);
+        $k->setEnabled(false);
+        $this->predis->set('cb:test', serialize(2));
+        $value = $k->get();
+        $this->assertEquals(1, $value);
+        $k->setEnabled(true);
+        $value = $k->get();
+        $this->assertEquals(2, $value);
+    }
+
     public function testGetTags()
     {
         $k = new Key($this->predis, 'test');

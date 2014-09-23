@@ -60,7 +60,9 @@ class Key
         if ($data === null) {
             $boundCallback = $this->closure->bindTo($this);
             $data = $boundCallback();
-            $this->predis->setex($this->getKeyName($this->key), $this->ttl, serialize($data));
+            if ($this->enabled) {
+                $this->predis->setex($this->getKeyName($this->key), $this->ttl, serialize($data));
+            }
             if ($this->onMiss instanceof \Closure) {
                 call_user_func_array($this->onMiss, [$this, $data]);
             }

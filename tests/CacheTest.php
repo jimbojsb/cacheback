@@ -77,4 +77,15 @@ class CacheBackTest extends BaseObject
 
     }
 
+    public function testDisable()
+    {
+        $c = new Cache($this->predis);
+        $c->disable();
+        $this->predis->set('cb:test', serialize(2));
+        $k = $c('test', $this->closure);
+        $val = $k->get();
+        $this->assertEquals(1, $val);
+
+    }
+
 }
