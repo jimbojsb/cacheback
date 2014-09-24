@@ -88,4 +88,17 @@ class CacheBackTest extends BaseObject
 
     }
 
+    public function testFlushTag()
+    {
+        $this->predis->set("cb:test", 1);
+        $this->predis->sadd("cb:tag:foo", "test");
+        $this->predis->sadd("cb:tags:test", "foo");
+
+        $this->assertCount(3, $this->predis->keys("cb:*"));
+
+        $c = new Cache($this->predis);
+        $c->flushTag("foo");
+        $this->assertCount(0, $this->predis->keys("cb:*"));
+    }
+
 }

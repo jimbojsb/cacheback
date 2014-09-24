@@ -54,6 +54,12 @@ class Cache
         return $keyObj;
     }
 
+    public function flushTag($tag)
+    {
+        $tag = new Tag($this->predis, $tag);
+        $tag->setKeyPrefix($this->keyPrefix);
+        $tag->flush();
+    }
 
     public function flushKey($key)
     {
